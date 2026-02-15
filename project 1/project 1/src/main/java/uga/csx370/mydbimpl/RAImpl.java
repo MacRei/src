@@ -63,19 +63,12 @@ public class RAImpl implements RA {
 
     @Override
     public Relation union(Relation rel1, Relation rel2) {
-        List<Type> types1 = rel1.getTypes();
-        List<Type> types2 = rel2.getTypes();
-        if (types1.size() != types2.size()) {
-            throw new IllegalArgumentException("Relations have different number of attributes.");
-        }
-        for (int i = 0; i < types1.size(); i++) {
-            if (types1.get(i) != types2.get(i)) {
-                throw new IllegalArgumentException("Attribute types do not match at index " + i);
-            }
+        if (!compatible(rel1, rel2)) {
+            throw new IllegalArgumentException("Relations are not compatible for union.");
         }
         Relation result = new RelationBuilder()
         .attributeNames(rel1.getAttrs())
-        .attributeTypes(types1)
+        .attributeTypes(rel1.getTypes())
         .build();
         Set<List<Cell>> seenRows = new HashSet<>();
         for (int i = 0; i < rel1.getSize(); i++) {
@@ -97,15 +90,8 @@ public class RAImpl implements RA {
 
     @Override
     public Relation intersect(Relation rel1, Relation rel2) {
-        List<Type> types1 = rel1.getTypes();
-        List<Type> types2 = rel2.getTypes();
-        if (types1.size() != types2.size()) {
-            throw new IllegalArgumentException("Relations have different number of attributes.");
-        }
-        for (int i = 0; i < types1.size(); i++) {
-            if (types1.get(i) != types2.get(i)) {
-                throw new IllegalArgumentException("Attribute types do not match at index " + i);
-            }
+        if (!compatible(rel1, rel2)) {
+            throw new IllegalArgumentException("Relations are not compatible for intersection.");
         }
         Set<List<Cell>> rows1 = new HashSet<>();
         for (int i = 0; i < rel1.getSize(); i++) {
@@ -113,7 +99,7 @@ public class RAImpl implements RA {
         }
         Relation result = new RelationBuilder()
         .attributeNames(rel1.getAttrs())
-        .attributeTypes(types1)
+        .attributeTypes(rel1.getTypes())
         .build();
         Set<List<Cell>> seenRows = new HashSet<>();
         for (int i = 0; i < rel2.getSize(); i++) {
@@ -130,8 +116,28 @@ public class RAImpl implements RA {
 
     @Override
     public Relation diff(Relation rel1, Relation rel2) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'diff'");
+        if (!compatible(rel1, rel2)) {
+            throw new IllegalArgumentException("Relations are not compatible for difference.");
+        }
+        Relation result = new RelationBuilder()
+        .attributeNames(rel1.getAttrs())
+        .attributeTypes(rel1.getTypes())
+        .build();
+        Set<List<Cell>> rows2 = new HashSet<>();
+        Set<List<Cell>> seenRows = new HashSet<>();
+        for (int i = 0; i < rel2.getSize(); i++) {
+            rows2.add(rel2.getRow(i));
+        }
+        for (int i = 0; i < rel1.getSize(); i++) {
+            List<Cell> row = rel1.getRow(i);
+            if (!rows2.contains(row)) {
+                if (!seenRows.contains(row)) {
+                    seenRows.add(row);
+                    result.insert(row);
+                }
+            }
+        }
+        return result;
     }
 
     // may need to do
@@ -151,15 +157,6 @@ public class RAImpl implements RA {
     public Relation join(Relation rel1, Relation rel2) {
         // TODO Auto-generated method stub
         // throw new UnsupportedOperationException("Unimplemented method 'join'");
-        Relation result = new Relation(rel.getAttributeNames(), rel.getAttributeTypes());
-        for (List<Object> tuple1 : rel1.getTuples()) {
-            for (List<Object> tuple2 : rel2.getTuples()) {
-                List<Object> joinedTuple = new ArrayList<>(tuple1);
-                joinedTuple.addAll(tuple2);
-                result.addTuple(joinedTuple);
-            }
-        }
-        return result;
     }
 
     // may need to do
@@ -169,4 +166,21 @@ public class RAImpl implements RA {
         throw new UnsupportedOperationException("Unimplemented method 'join'");
     }
 
+
+    public boolean compatible(Relation rel1, Relation rel2) {
+        List<Type> types1 = rel1.getTypes();
+        List<Type> types2 = rel2.getTypes();
+        if (types1.size() != types2.size()) {
+            return false;
+        }
+        for (int i = 0; i < types1.size(); i++) {
+            if (types1.get(i) != types2.get(i)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+
 }
+
