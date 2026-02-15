@@ -81,6 +81,7 @@ public class Driver {
         System.out.println("myid: 811705719");
         queryEvan();
         queryPhysicsStudents();
+        queryNate();
     }
 
     // Evan's query
@@ -202,6 +203,62 @@ public class Driver {
         System.out.println("\nQuery: Students taking Physics courses");
         limitedResult.print();
 
+    }
 
+    // Nate's query
+    // Gets the names of departments with budget > 400000 that have courses being taught.
+    private static void queryNate() {
+        System.out.println("811887600");
+
+        Relation instructor = new RelationBuilder()
+                .attributeNames(List.of("id", "name", "dept_name", "salary"))
+                .attributeTypes(List.of(Type.STRING, Type.STRING, Type.STRING, Type.DOUBLE))
+                .build();
+        instructor.loadData("/mysql-data-x370/activity02DBM/instructor_export.csv");
+        //instructor.print();
+        Relation teaches = new RelationBuilder()
+                .attributeNames(List.of("id", "course_id", "sec_id", "semester", "year"))
+                .attributeTypes(List.of(
+                        Type.STRING, Type.STRING, Type.STRING, Type.STRING, Type.INTEGER))
+                .build();
+        teaches.loadData("/mysql-data-x370/activity02DBM/teaches_export.csv");
+
+        Relation course = new RelationBuilder()
+                .attributeNames(List.of("course_id", "title", "dept_name", "credits"))
+                .attributeTypes(List.of(
+                        Type.STRING, Type.STRING, Type.STRING, Type.INTEGER))
+                .build();
+        course.loadData("/mysql-data-x370/activity02DBM/course_export.csv");
+
+        Relation department = new RelationBuilder()
+                .attributeNames(List.of("dept_name", "building", "budget"))
+                .attributeTypes(List.of(
+                        Type.STRING, Type.STRING, Type.DOUBLE))
+                .build();
+        department.loadData("/mysql-data-x370/activity02DBM/department_export.csv");
+
+        System.out.println("Query 1: Find the names of departments with budget > 400000 and display their courses being taught.");
+
+        RA ra = new RAImpl();
+
+        // department ⨝ course
+        Relation deptCourse = ra.join(department, course);
+
+        // (department ⨝ course) ⨝ teaches
+        Relation fullJoin = ra.join(deptCourse, teaches);
+
+        // SELECT budget > 400000
+        int budgetIndex = fullJoin.getAttrs().indexOf("budget");
+
+        Predicate budgetPredicate = row ->
+                row.get(budgetIndex).getAsDouble() > 700000;
+
+        Relation filtered = ra.select(fullJoin, budgetPredicate);
+
+        // PROJECT dept_name
+        Relation result = ra.project(filtered, List.of("dept_name", "budget","title"));
+
+        // Print result
+        result.print();
     }
 }
