@@ -142,6 +142,7 @@ public class Driver {
 
     //Kayla
     private static void queryPhysicsStudents() {
+        System.out.println("myid: mkm96827");
         RAImpl ra = new RAImpl();
 
         //Load student table
@@ -267,7 +268,7 @@ public class Driver {
     // Find pairs of departments that share a prerequisite: one dept has a course
     // that requires a prereq offered by a different department.
     private static void queryAdam() {
-        System.out.println("myid: 811354899");
+        System.out.println("myid: ajs31667");
         System.out.println("Query: Pairs of departments that share a prerequisite course");
 
         RA ra = new RAImpl();
