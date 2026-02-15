@@ -17,7 +17,8 @@ import uga.csx370.mydbimpl.RAImpl;
 public class Driver {
     
     public static void main(String[] args) {
-        
+
+        /*
         // myID
         System.out.println("myid: 811705713");
         // relation 1 (instructor table)
@@ -41,16 +42,20 @@ public class Driver {
         rel2.loadData("exported_data/student_export.csv"); //student_export_small if only want first 10 entries
         // print the relation
         rel2.print();
+        */
+        // Evan's query
+        queryEvan();
     }
 
     // Evan's query
+    // Gets advisors of A+ studnets and puts the advisors ID and name in query_evan.csv
     private static void queryEvan() {
         RAImpl ra = new RAImpl();
         
-        // Load the three relations with only the attributes we need for the query
+        // Load the three relations needed for the query
         Relation takes = new RelationBuilder()
-                .attributeNames(List.of("ID", "grade"))
-                .attributeTypes(List.of(Type.STRING, Type.STRING))
+                .attributeNames(List.of("ID", "course_id", "sec_id", "semester", "year", "grade"))
+                .attributeTypes(List.of(Type.STRING, Type.STRING, Type.STRING, Type.STRING, Type.INTEGER, Type.STRING))
                 .build();
         takes.loadData("exported_data/takes.csv");
         
@@ -61,8 +66,8 @@ public class Driver {
         advisor.loadData("exported_data/advisor.csv");
         
         Relation instructor = new RelationBuilder()
-                .attributeNames(List.of("ID", "name"))
-                .attributeTypes(List.of(Type.STRING, Type.STRING))
+                .attributeNames(List.of("ID", "name", "dept_name", "salary"))
+                .attributeTypes(List.of(Type.STRING, Type.STRING, Type.STRING, Type.DOUBLE))
                 .build();
         instructor.loadData("exported_data/instructor.csv");
         
@@ -76,7 +81,7 @@ public class Driver {
         Relation a_plus_stu = ra.project(a_plus, List.of("ID"));
         
         // change a_plus_stu ID to s_ID so it works with advisor table
-        Relation a_plus_stu_renamed = ra.rename(a_plus_stu, List.of("ID"), List.of("s_ID"))
+        Relation a_plus_stu_renamed = ra.rename(a_plus_stu, List.of("ID"), List.of("s_ID"));
         // Step 2: Find the advisor (instructor ID) for each of those students
         Relation a_plus_adv = ra.join(a_plus_stu_renamed, advisor);
 
@@ -92,6 +97,8 @@ public class Driver {
         
         // Print the result (advisors of A+ students)
         adv_of_a_plus_stu.print();
-    }
 
+        // Export the result to a CSV file
+        // adv_of_a_plus_stu.loadData("query_evan.csv");
+    }
 }
