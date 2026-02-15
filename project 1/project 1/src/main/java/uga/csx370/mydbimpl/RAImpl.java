@@ -205,7 +205,7 @@ public class RAImpl implements RA {
         return result;
     }
 
-    // need to do
+
     public Relation join(Relation rel1, Relation rel2) {
         List<String> attrs1 = rel1.getAttrs();
         List<String> attrs2 = rel2.getAttrs();
@@ -273,8 +273,42 @@ public class RAImpl implements RA {
     // may need to do
     @Override
     public Relation join(Relation rel1, Relation rel2, Predicate p) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'join'");
+        for  (String attr : rel1.getAttrs()) {
+            if (rel2.hasAttr(attr)) {
+                throw new IllegalArgumentException("Relations are not compatible for join.");
+            }
+        }
+        List<String> newAttrs = new ArrayList<>(rel1.getAttrs());
+        newAttrs.addAll(rel2.getAttrs());
+
+        List<Type> newTypes = new ArrayList<>(rel1.getTypes());
+        newTypes.addAll(rel2.getTypes());
+
+        Relation result = new RelationBuilder()
+                .attributeNames(newAttrs)
+                .attributeTypes(newTypes)
+                .build();
+
+        Set<List<Cell>> seenRows = new HashSet<>();
+
+        for (int i = 0; i < rel1.getSize(); i++) {
+            List<Cell> row1 = rel1.getRow(i);
+
+            for (int j  = 0; j < rel2.getSize(); j++) {
+                List<Cell> row2 = rel2.getRow(j);
+
+                List<Cell> combinedRow = new  ArrayList<>(row1);
+                combinedRow.addAll(row2);
+
+                if (p.check(combinedRow)) {
+                    if (!seenRows.contains(combinedRow)) {
+                        seenRows.add(combinedRow);
+                        result.insert(combinedRow);
+                    }
+                }
+            }
+        }
+        return result;
     }
 
 
