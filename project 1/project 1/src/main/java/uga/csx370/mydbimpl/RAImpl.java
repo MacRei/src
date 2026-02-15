@@ -175,8 +175,34 @@ public class RAImpl implements RA {
 
     @Override
     public Relation cartesianProduct(Relation rel1, Relation rel2) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'cartesianProduct'");
+        List<String> attrs1 = rel1.getAttrs();
+        List<String> attrs2 = rel2.getAttrs();
+        for (String attr : attrs1) {
+            if (attrs2.contains(attr)) {
+                throw new IllegalArgumentException("Relations have common attribute: " + attr);
+            }
+        }
+        List<String> newAttrs = new ArrayList<>();
+        List<Type> newTypes = new ArrayList<>();
+        newAttrs.addAll(attrs1);
+        newTypes.addAll(rel1.getTypes());
+        newAttrs.addAll(attrs2);
+        newTypes.addAll(rel2.getTypes());
+        Relation result = new RelationBuilder()
+                .attributeNames(newAttrs)
+                .attributeTypes(newTypes)
+                .build();
+        for (int i = 0; i < rel1.getSize(); i++) {
+            List<Cell> row1 = rel1.getRow(i);
+            for (int j = 0; j < rel2.getSize(); j++) {
+                List<Cell> row2 = rel2.getRow(j);
+                List<Cell> newRow = new ArrayList<>();
+                newRow.addAll(row1);
+                newRow.addAll(row2);
+                result.insert(newRow);
+            }
+        }
+        return result;
     }
 
     // need to do
