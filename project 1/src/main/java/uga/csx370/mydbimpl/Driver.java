@@ -80,6 +80,7 @@ public class Driver {
         // Evan's query
         System.out.println("myid: 811705719");
         queryEvan();
+        queryPhysicsStudents();
     }
 
     // Evan's query
@@ -136,5 +137,71 @@ public class Driver {
         // Export the result to a CSV file
         // adv_of_a_plus_stu.loadData("query_evan.csv");
     }
-    
+
+    //Kayla
+    private static void queryPhysicsStudents() {
+        RAImpl ra = new RAImpl();
+
+        //Load student table
+        Relation student = new RelationBuilder()
+                .attributeNames(List.of("ID", "name", "dept_name", "tot_cred"))
+                .attributeTypes(List.of(Type.STRING, Type.STRING, Type.STRING, Type.INTEGER))
+                .build();
+        student.loadData("exported_data/student.csv");
+
+        //Load takes table
+        Relation takes = new RelationBuilder()
+                .attributeNames(List.of("ID", "course_id", "sec_id", "semester", "year", "grade"))
+                .attributeTypes(List.of(Type.STRING, Type.STRING, Type.STRING, Type.STRING, Type.INTEGER, Type.STRING))
+                .build();
+        takes.loadData("exported_data/takes.csv");
+
+        //Load course table
+        Relation course = new RelationBuilder()
+                .attributeNames(List.of("courseID", "name", "dept_name", "credits"))
+                .attributeTypes(List.of(Type.STRING, Type.STRING, Type.STRING, Type.DOUBLE))
+                .build();
+        course.loadData("exported_data/course.csv");
+
+        //Filter Physics courses
+        Relation physicsCourses = ra.select(course, row ->
+                row.get(course.getAttrIndex("dept_name")).toString().equalsIgnoreCase("Physics")
+        );
+
+        //Join takes
+        Relation studentTakesPhysics = ra.join(takes, physicsCourses, row -> {
+            int takesCourseIndex = takes.getAttrIndex("course_id");
+            int courseIdIndex = takes.getAttrs().size() + physicsCourses.getAttrIndex("courseID");
+            return row.get(takesCourseIndex).toString().equals(row.get(courseIdIndex).toString());
+        });
+
+        //Rename course
+        Relation studentTakesPhysicsRenamed = ra.rename(studentTakesPhysics,
+                List.of("name"), List.of("courseName"));
+
+        //Join with student table on student ID
+        Relation studentsPhysicsInfo = ra.join(studentTakesPhysicsRenamed, student, row -> {
+            int takesIdIndex = studentTakesPhysicsRenamed.getAttrIndex("ID");
+            int studentIdIndex = studentTakesPhysicsRenamed.getAttrs().size() + student.getAttrIndex("ID");
+            return row.get(takesIdIndex).toString().equals(row.get(studentIdIndex).toString());
+        });
+
+        //Project only student ID, student name, and course name
+        Relation result = ra.project(studentsPhysicsInfo, List.of("ID", "name", "courseName"));
+
+
+        Relation limitedResult = new RelationBuilder()
+                .attributeNames(result.getAttrs())
+                .attributeTypes(result.getTypes())
+                .build();
+        int rowsToShow = Math.min(15, result.getSize());
+        for (int i = 0; i < rowsToShow; i++) {
+            limitedResult.insert(result.getRow(i));
+        }
+
+        System.out.println("\nQuery: Students taking Physics courses");
+        limitedResult.print();
+
+
+    }
 }

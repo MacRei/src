@@ -273,16 +273,17 @@ public class RAImpl implements RA {
     // may need to do
     @Override
     public Relation join(Relation rel1, Relation rel2, Predicate p) {
-        for  (String attr : rel1.getAttrs()) {
-            if (rel2.hasAttr(attr)) {
-                throw new IllegalArgumentException("Relations are not compatible for join.");
-            }
-        }
         List<String> newAttrs = new ArrayList<>(rel1.getAttrs());
-        newAttrs.addAll(rel2.getAttrs());
-
         List<Type> newTypes = new ArrayList<>(rel1.getTypes());
-        newTypes.addAll(rel2.getTypes());
+
+        for (int i = 0; i < rel2.getAttrs().size(); i++) {
+            String attr = rel2.getAttrs().get(i);
+            if (newAttrs.contains(attr)) {
+                attr = attr + "_2"; // rename to make it unique
+            }
+            newAttrs.add(attr);
+            newTypes.add(rel2.getTypes().get(i));
+        }
 
         Relation result = new RelationBuilder()
                 .attributeNames(newAttrs)
@@ -294,10 +295,10 @@ public class RAImpl implements RA {
         for (int i = 0; i < rel1.getSize(); i++) {
             List<Cell> row1 = rel1.getRow(i);
 
-            for (int j  = 0; j < rel2.getSize(); j++) {
+            for (int j = 0; j < rel2.getSize(); j++) {
                 List<Cell> row2 = rel2.getRow(j);
 
-                List<Cell> combinedRow = new  ArrayList<>(row1);
+                List<Cell> combinedRow = new ArrayList<>(row1);
                 combinedRow.addAll(row2);
 
                 if (p.check(combinedRow)) {
