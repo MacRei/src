@@ -15,7 +15,6 @@ import uga.csx370.mydb.Type;
 
 public class RAImpl implements RA {
 
-    // need to do
     public Relation select(Relation rel, Predicate p) {
         Relation result = new RelationBuilder()
         .attributeNames(rel.getAttrs())
@@ -31,7 +30,6 @@ public class RAImpl implements RA {
         return result;
     }
 
-    // need to do
     public Relation project(Relation rel, List<String> attrs) {
         for (String attr : attrs) {
             if (!rel.hasAttr(attr)) {
@@ -140,7 +138,6 @@ public class RAImpl implements RA {
         return result;
     }
 
-    // may need to do
     @Override
     public Relation rename(Relation rel, List<String> origAttr, List<String> renamedAttr) {
         if (origAttr.size() != renamedAttr.size()) {
@@ -270,7 +267,6 @@ public class RAImpl implements RA {
         return result;
     }
 
-    // may need to do
     @Override
     public Relation join(Relation rel1, Relation rel2, Predicate p) {
         for  (String attr : rel1.getAttrs()) {
