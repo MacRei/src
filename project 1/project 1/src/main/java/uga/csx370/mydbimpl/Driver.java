@@ -53,6 +53,14 @@ public class Driver {
         .attributeTypes(List.of(Type.STRING, Type.STRING))
         .build();
         rel2.loadData("project 1/project 1/exported_data/prereq.csv");
+        Relation rel2Limited = new RelationBuilder()
+                .attributeNames(rel2.getAttrs())
+                .attributeTypes(rel2.getTypes())
+                .build();
+        int rows = Math.min(50, rel2.getSize());
+        for (int i = 0; i < rows; i++) {
+            rel2Limited.insert(rel2.getRow(i));
+        }
 
         Relation joined = ra.join(rel1, rel2, row ->
                 row.get(0).toString().equals(row.get(4).toString())
