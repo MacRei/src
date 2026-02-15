@@ -143,8 +143,34 @@ public class RAImpl implements RA {
     // may need to do
     @Override
     public Relation rename(Relation rel, List<String> origAttr, List<String> renamedAttr) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'rename'");
+        if (origAttr.size() != renamedAttr.size()) {
+            throw new IllegalArgumentException("Original and renamed attribute lists must be of the same size.");
+        }
+        for (String attr : origAttr) {
+            if (!rel.hasAttr(attr)) {
+                throw new IllegalArgumentException("Attribute " + attr + " does not exist in the relation.");
+            }
+        }
+        List<String> relAttrs = rel.getAttrs();
+        List<String> finalAttrs = new ArrayList<>();
+        for (int i = 0; i < relAttrs.size(); i++) {
+            int idx = origAttr.indexOf(relAttrs.get(i));
+            if (idx >= 0) {
+                finalAttrs.add(renamedAttr.get(idx));
+            } else {
+                finalAttrs.add(relAttrs.get(i));
+            }
+        }
+        Relation result = new RelationBuilder()
+        .attributeNames(finalAttrs)
+        .attributeTypes(rel.getTypes())
+        .build();
+        for (int i = 0; i < rel.getSize(); i++) {
+            List<Cell> row = rel.getRow(i);
+            result.insert(row);
+        }
+        return result;
+    
     }
 
     @Override
