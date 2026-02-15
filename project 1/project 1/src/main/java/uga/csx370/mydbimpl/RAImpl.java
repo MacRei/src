@@ -1,21 +1,31 @@
 package uga.csx370.mydbimpl;
 
 import java.util.List;
+import java.util.ArrayList;
+import java.util.Set;
+import java.util.HashSet;
 
 import uga.csx370.mydb.Predicate;
 import uga.csx370.mydb.RA;
 import uga.csx370.mydb.Relation;
+import uga.csx370.mydb.RelationBuilder;
+import uga.csx370.mydb.Cell;
+import uga.csx370.mydb.Type;
+
 
 public class RAImpl implements RA {
 
     // need to do
     public Relation select(Relation rel, Predicate p) {
-        // TODO Auto-generated method stub
-        // throw new UnsupportedOperationException("Unimplemented method 'select'");
-        Relation result = new Relation(rel.getAttributeNames(), rel.getAttributeTypes());
-        for (List<Object> tuple : rel.getTuples()) {
-            if (p.evaluate(tuple)) {
-                result.addTuple(tuple);
+        Relation result = new RelationBuilder()
+        .attributeNames(rel.getAttrs())
+        .attributeTypes(rel.getTypes())
+        .build();
+
+        for (int i = 0; i < rel.getSize(); i++) {
+            List<Cell> row = rel.getRow(i);
+            if (p.check(row)) {
+                result.insert(row);
             }
         }
         return result;
@@ -23,16 +33,30 @@ public class RAImpl implements RA {
 
     // need to do
     public Relation project(Relation rel, List<String> attrs) {
-        // TODO Auto-generated method stub
-        // throw new UnsupportedOperationException("Unimplemented method 'project'");
-        Relation result = new Relation(attrs, rel.getAttributeTypes());
-        for (List<Object> tuple : rel.getTuples()) {
-            List<Object> projectedTuple = new ArrayList<>();
-            for (String attr : attrs) {
-                int index = rel.getAttributeNames().indexOf(attr);
-                projectedTuple.add(tuple.get(index));
+        for (String attr : attrs) {
+            if (!rel.hasAttr(attr)) {
+                throw new IllegalArgumentException("Attribute " + attr + " does not exist in the relation.");
             }
-            result.addTuple(projectedTuple);
+        }
+        List<Type> types = new ArrayList<>();
+        for (String attr : attrs) {
+            types.add(rel.getTypes().get(rel.getAttrIndex(attr)));
+        }
+        Relation result = new RelationBuilder()
+        .attributeNames(attrs)
+        .attributeTypes(types)
+        .build();
+        Set<List<Cell>> seenRows = new HashSet<>();
+        for (int i = 0; i < rel.getSize(); i++) {
+            List<Cell> row = rel.getRow(i);
+            List<Cell> projectedRow = new ArrayList<>();
+            for (String attr : attrs) {
+                projectedRow.add(row.get(rel.getAttrIndex(attr)));
+            }
+            if (!seenRows.contains(projectedRow)) {
+                seenRows.add(projectedRow);
+                result.insert(projectedRow);
+            }
         }
         return result;
     }
