@@ -39,6 +39,8 @@ public class Driver {
         //// print the relation
         //rel2.print();
 //
+
+
         RA ra = new RAImpl();
         
 
@@ -46,13 +48,13 @@ public class Driver {
                 .attributeNames(List.of("courseID", "name", "dept_name", "credits"))
                 .attributeTypes(List.of(Type.STRING, Type.STRING, Type.STRING, Type.DOUBLE))
                 .build();
-        rel1.loadData("project 1/project 1/exported_data/course.csv");
+        rel1.loadData("exported_data/course.csv");
 
         Relation rel2 = new RelationBuilder()
         .attributeNames(List.of("course_ID", "prereq_ID"))
         .attributeTypes(List.of(Type.STRING, Type.STRING))
         .build();
-        rel2.loadData("project 1/project 1/exported_data/prereq.csv");
+        rel2.loadData("exported_data/prereq.csv");
         Relation rel2Limited = new RelationBuilder()
                 .attributeNames(rel2.getAttrs())
                 .attributeTypes(rel2.getTypes())
@@ -74,8 +76,9 @@ public class Driver {
         joined = ra.project(joined, List.of("course_ID", "courseName", "prereq_ID", "name"));
         joined = ra.rename(joined, List.of("course_ID", "courseName", "prereq_ID", "name"), List.of("course_ID", "course_name", "prereq_ID", "prereq_name"));
         joined.print();
-        
+       
         // Evan's query
+        System.out.println("myid: 811705719");
         queryEvan();
     }
 
