@@ -82,6 +82,7 @@ public class Driver {
         queryEvan();
         queryPhysicsStudents();
         queryNate();
+        queryAdam();
     }
 
     // Evan's query
@@ -259,6 +260,65 @@ public class Driver {
         Relation result = ra.project(filtered, List.of("dept_name", "budget","title"));
 
         // Print result
+        result.print();
+    }
+
+    // Adam's query
+    // Find pairs of departments that share a prerequisite: one dept has a course
+    // that requires a prereq offered by a different department.
+    private static void queryAdam() {
+        System.out.println("myid: 811354899");
+        System.out.println("Query: Pairs of departments that share a prerequisite course");
+
+        RA ra = new RAImpl();
+
+        // Load course table
+        Relation course = new RelationBuilder()
+                .attributeNames(List.of("courseID", "name", "dept_name", "credits"))
+                .attributeTypes(List.of(Type.STRING, Type.STRING, Type.STRING, Type.DOUBLE))
+                .build();
+        course.loadData("exported_data/course.csv");
+
+        // Load prereq table
+        Relation prereq = new RelationBuilder()
+                .attributeNames(List.of("course_ID", "prereq_ID"))
+                .attributeTypes(List.of(Type.STRING, Type.STRING))
+                .build();
+        prereq.loadData("exported_data/prereq.csv");
+
+        // Rename course attrs for first join (course that HAS the prereq)
+        Relation courseRenamed1 = ra.rename(course,
+                List.of("courseID", "name", "dept_name", "credits"),
+                List.of("req_courseID", "req_name", "dept_requiring", "req_credits"));
+
+        // Join prereq with courseRenamed1 on course_ID = req_courseID
+        Relation withRequiring = ra.join(prereq, courseRenamed1, row ->
+                row.get(0).toString().equals(row.get(2).toString())
+        );
+
+        // Project to just course_ID, prereq_ID, dept_requiring
+        Relation reqDept = ra.project(withRequiring, List.of("course_ID", "prereq_ID", "dept_requiring"));
+
+        // Rename course attrs for second join (course that IS the prereq)
+        Relation courseRenamed2 = ra.rename(course,
+                List.of("courseID", "name", "dept_name", "credits"),
+                List.of("pre_courseID", "pre_name", "dept_offering_prereq", "pre_credits"));
+
+        // Join reqDept with courseRenamed2 on prereq_ID = pre_courseID
+        Relation withOffering = ra.join(reqDept, courseRenamed2, row ->
+                row.get(1).toString().equals(row.get(3).toString())
+        );
+
+        // Select only pairs where departments are different
+        Relation diffDepts = ra.select(withOffering, row -> {
+            int reqIdx = withOffering.getAttrIndex("dept_requiring");
+            int offIdx = withOffering.getAttrIndex("dept_offering_prereq");
+            return !row.get(reqIdx).toString().equals(row.get(offIdx).toString());
+        });
+
+        // Project to just the two department names
+        Relation result = ra.project(diffDepts, List.of("dept_requiring", "dept_offering_prereq"));
+
         result.print();
     }
 }
