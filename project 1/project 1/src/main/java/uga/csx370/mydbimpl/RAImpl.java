@@ -63,8 +63,36 @@ public class RAImpl implements RA {
 
     @Override
     public Relation union(Relation rel1, Relation rel2) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'union'");
+        List<Type> types1 = rel1.getTypes();
+        List<Type> types2 = rel2.getTypes();
+        if (types1.size() != types2.size()) {
+            throw new IllegalArgumentException("Relations have different number of attributes.");
+        }
+        for (int i = 0; i < types1.size(); i++) {
+            if (types1.get(i) != types2.get(i)) {
+                throw new IllegalArgumentException("Attribute types do not match at index " + i);
+            }
+        }
+        Relation result = new RelationBuilder()
+        .attributeNames(rel1.getAttrs())
+        .attributeTypes(types1)
+        .build();
+        Set<List<Cell>> seenRows = new HashSet<>();
+        for (int i = 0; i < rel1.getSize(); i++) {
+            List<Cell> row = rel1.getRow(i);
+            if (!seenRows.contains(row)) {
+                seenRows.add(row);
+                result.insert(row);
+            }
+        }
+        for (int i = 0; i < rel2.getSize(); i++) {
+            List<Cell> row = rel2.getRow(i);
+            if (!seenRows.contains(row)) {
+                seenRows.add(row);
+                result.insert(row);
+            }
+        }
+        return result;
     }
 
     @Override
