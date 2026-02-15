@@ -155,8 +155,67 @@ public class RAImpl implements RA {
 
     // need to do
     public Relation join(Relation rel1, Relation rel2) {
-        // TODO Auto-generated method stub
-        // throw new UnsupportedOperationException("Unimplemented method 'join'");
+        List<String> attrs1 = rel1.getAttrs();
+        List<String> attrs2 = rel2.getAttrs();
+
+        List<Type> types1 = rel1.getTypes();
+        List<Type> types2 = rel2.getTypes();
+
+        //finds common attributes
+        List<String> commonAttrs = new  ArrayList<>();
+        for (String attr : attrs1) {
+            if (rel2.hasAttr(attr)) {
+                commonAttrs.add(attr);
+            }
+        }
+        //builds result schema
+        List<String> newAttrs = new  ArrayList<>(attrs1);
+        List<Type> newTypes = new ArrayList<>(types1);
+
+        for (int i = 0; i < attrs2.size(); i++) {
+            if (!commonAttrs.contains(attrs2.get(i))) {
+                newAttrs.add(attrs2.get(i));
+                newTypes.add(types2.get(i));
+            }
+        }
+        Relation result = new RelationBuilder()
+                .attributeNames(newAttrs)
+                .attributeTypes(newTypes)
+                .build();
+        Set<List<Cell>> seenRows = new HashSet<>();
+        for (int i = 0; i < rel1.getSize(); i++) {
+            List<Cell> row1 = rel1.getRow(i);
+
+            for (int j = 0; j < rel2.getSize(); j++) {
+                List<Cell> row2 = rel2.getRow(j);
+
+                boolean match = true;
+
+                for (String attr : commonAttrs) {
+                    int index1 = rel1.getAttrIndex(attr);
+                    int index2 = rel2.getAttrIndex(attr);
+
+                    if (!row1.get(index1).equals(row2.get(index2))) {
+                        match = false;
+                        break;
+                    }
+                }
+                if (match) {
+                    List<Cell> newRow = new ArrayList<>(row1);
+
+                    for (int k = 0; k < attrs2.size(); k++) {
+                        if (!commonAttrs.contains(attrs2.get(k))) {
+                            newRow.add(row2.get(k));
+                        }
+                    }
+                    if (!seenRows.contains(newRow)) {
+                        seenRows.add(newRow);
+                        result.insert(newRow);
+                    }
+                }
+            }
+        }
+        return result;
     }
 
     // may need to do
