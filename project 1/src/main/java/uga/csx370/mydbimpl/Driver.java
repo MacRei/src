@@ -75,10 +75,11 @@ public class Driver {
         );
         joined = ra.project(joined, List.of("course_ID", "courseName", "prereq_ID", "name"));
         joined = ra.rename(joined, List.of("course_ID", "courseName", "prereq_ID", "name"), List.of("course_ID", "course_name", "prereq_ID", "prereq_name"));
+        System.out.println("myid: msr00109");
         joined.print();
        
         // Evan's query
-        System.out.println("myid: 811705719");
+        System.out.println("myid: ecm19269");
         queryEvan();
         queryPhysicsStudents();
         queryNate();
