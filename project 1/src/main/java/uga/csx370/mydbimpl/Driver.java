@@ -218,28 +218,28 @@ public class Driver {
                 .attributeNames(List.of("id", "name", "dept_name", "salary"))
                 .attributeTypes(List.of(Type.STRING, Type.STRING, Type.STRING, Type.DOUBLE))
                 .build();
-        instructor.loadData("exported_data/instructor_export.csv");
+        instructor.loadData("exported_data/instructor.csv");
         //instructor.print();
         Relation teaches = new RelationBuilder()
                 .attributeNames(List.of("id", "course_id", "sec_id", "semester", "year"))
                 .attributeTypes(List.of(
                         Type.STRING, Type.STRING, Type.STRING, Type.STRING, Type.INTEGER))
                 .build();
-        teaches.loadData("exported_data/teaches_export.csv");
+        teaches.loadData("exported_data/teaches.csv");
 
         Relation course = new RelationBuilder()
                 .attributeNames(List.of("course_id", "title", "dept_name", "credits"))
                 .attributeTypes(List.of(
                         Type.STRING, Type.STRING, Type.STRING, Type.INTEGER))
                 .build();
-        course.loadData("exported_data/course_export.csv");
+        course.loadData("exported_data/course.csv");
 
         Relation department = new RelationBuilder()
                 .attributeNames(List.of("dept_name", "building", "budget"))
                 .attributeTypes(List.of(
                         Type.STRING, Type.STRING, Type.DOUBLE))
                 .build();
-        department.loadData("exported_data/department_export.csv");
+        department.loadData("exported_data/department.csv");
 
         System.out.println("Query 1: Find the names of departments with budget > 400000 and display their courses being taught.");
 
@@ -268,10 +268,10 @@ public class Driver {
 
     // Adam's query
     // Find pairs of departments that share a prerequisite: one dept has a course
-    // that requires a prereq offered by a different department.
+    // that requires a prereq offered by a different department, showing their buildings.
     private static void queryAdam() {
         System.out.println("myid: ajs31667");
-        System.out.println("Query: Pairs of departments that share a prerequisite course");
+        System.out.println("Query: Pairs of departments that share a prerequisite course, with their buildings");
 
         RA ra = new RAImpl();
 
@@ -288,6 +288,13 @@ public class Driver {
                 .attributeTypes(List.of(Type.STRING, Type.STRING))
                 .build();
         prereq.loadData("exported_data/prereq.csv");
+
+        // Load department table
+        Relation department = new RelationBuilder()
+                .attributeNames(List.of("dept_name", "building", "budget"))
+                .attributeTypes(List.of(Type.STRING, Type.STRING, Type.DOUBLE))
+                .build();
+        department.loadData("exported_data/department.csv");
 
         // Rename course attrs for first join (course that HAS the prereq)
         Relation courseRenamed1 = ra.rename(course,
@@ -320,8 +327,26 @@ public class Driver {
         });
 
         // Project to just the two department names
-        Relation result = ra.project(diffDepts, List.of("dept_requiring", "dept_offering_prereq"));
+        Relation deptPairs = ra.project(diffDepts, List.of("dept_requiring", "dept_offering_prereq"));
 
-        result.print();
+        // Join with department table to get the building of the requiring dept
+        Relation deptRenamed1 = ra.rename(department,
+                List.of("dept_name", "building", "budget"),
+                List.of("dept_requiring", "req_building", "req_budget"));
+        Relation withReqBuilding = ra.join(deptPairs, deptRenamed1, row ->
+                row.get(0).toString().equals(row.get(2).toString())
+        );
+        Relation result = ra.project(withReqBuilding, List.of("dept_requiring", "req_building", "dept_offering_prereq"));
+
+        // Limit to 50 rows
+        Relation limitedResult = new RelationBuilder()
+                .attributeNames(result.getAttrs())
+                .attributeTypes(result.getTypes())
+                .build();
+        int rowsToShow = Math.min(50, result.getSize());
+        for (int i = 0; i < rowsToShow; i++) {
+            limitedResult.insert(result.getRow(i));
+        }
+        limitedResult.print();
     }
 }
